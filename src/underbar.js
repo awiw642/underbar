@@ -330,7 +330,7 @@
   _.memoize = function(func) {
     var valueUsed = {};
     return function() {
-      var arg = String(arguments);
+      var arg = JSON.stringify(arguments);
       if(!valueUsed[arg]) {
         valueUsed[arg] = func.apply(this, arguments);
       }

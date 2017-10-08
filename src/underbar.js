@@ -37,7 +37,7 @@
 
   // Like first, but for the last elements. If n is undefined, return just the
   // last element.
-  _.last = function(array, n) {
+   _.last = function(array, n) {
     return n === undefined ? array[array.length - 1] : n > 0 ? array.slice(-n) : [];
   };
 
@@ -168,7 +168,7 @@
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
   _.reduce = function(collection, iterator, accumulator) {
-    var start;
+    let start;
     if(accumulator === undefined) {
       start = 1;
       accumulator = collection[0];
@@ -187,14 +187,14 @@
     // terms of reduce(). Here's a freebie to demonstrate!
     if(Array.isArray(collection)) {
       return _.reduce(collection, function(wasFound, item) {
-        if (wasFound) {
+        if(wasFound) {
           return true;
         }
         return item === target;
       }, false);
     } else {
       return _.reduce(Object.keys(collection), function(wasFound, item) {
-        if (wasFound) {
+        if(wasFound) {
           return true;
         }
         return collection[item] === target;
@@ -208,11 +208,12 @@
 
 
   _.every = function(collection, iterator) {
-    return _.reduce(collection, function(wasFound, item) {
-      if(wasFound === false) {
+    iterator = iterator || _.identity;
+    return _.reduce(collection, function(resultCheck, iteratedItem) {
+      if(resultCheck === false) {
         return false;
       } else {
-        return iterator !== undefined ? !!(iterator(item)) : !!(item);
+        return resultCheck === !!iterator(iteratedItem);
       }
     }, true);
   };
@@ -222,8 +223,9 @@
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+    iterator = iterator || _.identity;
     return !_.every(collection, function(item) {
-      return iterator !== undefined ? !iterator(item) : !(item);
+      return !iterator(item);
     });
   };
 
@@ -259,7 +261,7 @@
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
-    for(var x = 0; x < arguments.length; x++) {
+    for(var x = 1; x < arguments.length; x++) {
       var objKeys = Object.keys(arguments[x]);
       for(var y = 0; y < objKeys.length; y++) {
         if(!(Object.keys(obj).includes(objKeys[y]))) {
@@ -369,6 +371,11 @@
   // Calls the method named by functionOrKey on each value in the list.
   // Note: You will need to learn a bit about .apply to complete this.
   _.invoke = function(collection, functionOrKey, args) {
+     var isFunc = typeof functionOrKey === 'function';
+     return _.map(collection, function(collectionItem) {
+       var func = isFunc ? functionOrKey : collectionItem[functionOrKey];
+       return func.apply(collectionItem, args);
+     });
   };
 
   // Sort the object's values by a criterion produced by an iterator.
@@ -376,6 +383,10 @@
   // of that string. For example, _.sortBy(people, 'name') should sort
   // an array of people by their name.
   _.sortBy = function(collection, iterator) {
+    let criterion = typeof iterator === 'function' ? (item) => iterator(item) : (item) => item[iterator];
+    return collection.sort(function(a, b) {
+      return criterion(a) - criterion(b);
+    });
   };
 
   // Zip together two or more arrays with elements of the same index

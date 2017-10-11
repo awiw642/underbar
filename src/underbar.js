@@ -78,11 +78,11 @@
   // Return all elements of an array that pass a truth test.
   _.filter = function(collection, test) {
     let trueCollection = [];
-    for(let i = 0; i < collection.length; i++) {
-      if(test(collection[i])) {
-        trueCollection.push(collection[i]);
+    _.each(collection, function(item) {
+      if(test(item)) {
+        trueCollection.push(item);
       }
-    }
+    });
     return trueCollection;
   };
 
@@ -90,30 +90,34 @@
 
   _.reject = function(collection, test) {
     // TIP: see if you can re-use _.filter() here, without simply
-    // copying code in and modifying it
-    let falseCollection = [];
-    let trueCollection = _.filter(collection, test);
-    for(var i = 0; i < collection.length; i++) {
-      if(!trueCollection.includes(collection[i]))  {
-        falseCollection.push(collection[i]);
-      }
-    }
-    return falseCollection;
+    return _.filter(collection, function(item) {
+      return !test(item);
+    });
   };
 
   // Produce a duplicate-free version of the array.
   _.uniq = function(array, isSorted, iterator) {
-    let uniqueCollection = [];
-    let transformedCollection = [];
+    var unique = [];
+    var transformed = [];
     iterator = iterator || _.identity;
-    for(var i = 0; i < array.length; i++) {
-      var item = array[i];
-      if(!transformedCollection.includes(iterator(item))) {
-          uniqueCollection.push(item);
-          transformedCollection.push(iterator(item));
+    if (isSorted) {
+      unique.push(array[0]);
+      transformed.push(iterator(array[0]));
+      for (var i = 1; i < array.length; i++) {
+        transformed.push(iterator(array[i]));
+        if (!(transformed[i] === transformed[i - 1])) {
+          unique.push(array[i]);
         }
+      }
+    } else {
+      for (var i = 0; i < array.length; i++) {
+        if (!transformed.includes(iterator(array[i]))) {
+          transformed.push(iterator(array[i]));
+          unique.push(array[i]);
+        }
+      }
     }
-    return uniqueCollection;
+    return unique;
   };
 
 
@@ -123,9 +127,9 @@
     // like each(), but in addition to running the operation on all
     // the members, it also maintains an array of results.
     var transformedCollection = [];
-    for(var i = 0; i < collection.length; i++) {
-      transformedCollection.push(iterator(collection[i]));
-    }
+    _.each(collection, function(value, key, collection) {
+      transformedCollection.push(iterator(value));
+    });
     return transformedCollection;
   };
 
@@ -185,21 +189,19 @@
   _.contains = function(collection, target) {
     // TIP: Many iteration problems can be most easily expressed in
     // terms of reduce(). Here's a freebie to demonstrate!
-    if(Array.isArray(collection)) {
-      return _.reduce(collection, function(wasFound, item) {
-        if(wasFound) {
-          return true;
-        }
-        return item === target;
-      }, false);
-    } else {
-      return _.reduce(Object.keys(collection), function(wasFound, item) {
-        if(wasFound) {
-          return true;
-        }
-        return collection[item] === target;
-      }, false);
+    var values = [];
+    if (!Array.isArray(collection)) {
+      for (var key in collection) {
+        values.push(collection[key]);
+      }
+      collection = values;
     }
+    return _.reduce(collection, function(wasFound, item) {
+      if (wasFound) {
+        return true;
+      };
+      return item === target;
+    }, false);
 
   };
 
@@ -249,10 +251,9 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
-    for(var x = 0; x < arguments.length; x++) {
-      var objKeys = Object.keys(arguments[x]);
-      for(var y = 0; y < objKeys.length; y++) {
-        obj[objKeys[y]] = arguments[x][objKeys[y]];
+    for (var i = 0; i < arguments.length; i++) {
+      for (var key in arguments[i]) {
+        obj[key] = arguments[i][key];
       }
     }
     return obj;
@@ -261,11 +262,10 @@
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
-    for(var x = 1; x < arguments.length; x++) {
-      var objKeys = Object.keys(arguments[x]);
-      for(var y = 0; y < objKeys.length; y++) {
-        if(!(Object.keys(obj).includes(objKeys[y]))) {
-          obj[objKeys[y]] = arguments[x][objKeys[y]];
+    for (var i = 0; i < arguments.length; i++) {
+      for (var key in arguments[i]) {
+        if (obj[key] === undefined) {
+          obj[key] = arguments[i][key];
         }
       }
     }
@@ -293,6 +293,7 @@
     // TIP: We'll return a new function that delegates to the old one, but only
     // if it hasn't been called before.
     return function() {
+      debugger;
       if (!alreadyCalled) {
         // TIP: .apply(this, arguments) is the standard way to pass on all of the
         // infromation from one function call to another.
@@ -402,6 +403,15 @@
   //
   // Hint: Use Array.isArray to check if something is an array
   _.flatten = function(nestedArray, result) {
+    var resArr = result || [];
+    for (var i = 0; i < nestedArray.length; i++) {
+      if(Array.isArray(nestedArray[i])) {
+        _.flatten(nestedArray[i], resArr);
+      } else {
+        resArr.push(nestedArray[i]);
+      }
+    }
+    return resArr;
   };
 
   // Takes an arbitrary number of arrays and produces an array that contains
